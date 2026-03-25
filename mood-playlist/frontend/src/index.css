@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  @keyframes mood-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-mood-fade-in {
+    animation: mood-fade-in 400ms ease-out forwards;
+  }
+
+  @keyframes mood-card-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-mood-card-in {
+    animation: mood-card-in 0.45s ease-out forwards;
+    opacity: 0;
+  }
+}
