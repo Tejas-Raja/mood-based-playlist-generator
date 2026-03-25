@@ -1,0 +1,14 @@
+node_modules/
+__pycache__/
+
+# Env files (do not commit secrets)
+.env
+.env.*
+
+# Python virtualenvs
+venv/
+.venv/
+
+# Frontend build output
+dist/
+

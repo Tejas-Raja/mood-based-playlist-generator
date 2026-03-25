@@ -17,16 +17,25 @@ export function ErrorMessage({ message, onDismiss }) {
         </svg>
       </span>
       <p className="min-w-0 flex-1 leading-relaxed">{message}</p>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="shrink-0 rounded-lg p-1 text-red-600 transition hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/50"
-        aria-label="Dismiss error"
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded-lg bg-red-600/10 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-600/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70 dark:text-red-200"
+        >
+          Try again
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="shrink-0 rounded-lg p-1 text-red-600 transition hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70 dark:text-red-300 dark:hover:bg-red-900/50"
+          aria-label="Dismiss error"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }

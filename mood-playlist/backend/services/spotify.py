@@ -163,15 +163,31 @@ def get_recommendations(valence: float, energy: float) -> list[dict]:
         return _fetch_recommendations(sp, valence, energy)
     except SpotifyException as e:
         logger.exception("Spotify API error")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Spotify API request failed: {e}",
-        ) from e
+
+        if e.http_status == 429:
+            retry_after = None
+            try:
+                retry_after = (e.headers or {}).get("Retry-After")
+            except Exception:
+                retry_after = None
+            if retry_after:
+                detail = f"Spotify rate limit exceeded. Retry in {retry_after} seconds."
+            else:
+                detail = "Spotify rate limit exceeded. Please retry in a moment."
+            raise HTTPException(status_code=429, detail=detail) from e
+
+        if e.http_status in (400, 401, 403):
+            raise HTTPException(
+                status_code=500,
+                detail="Spotify authentication failed. Check your API keys.",
+            ) from e
+
+        raise HTTPException(status_code=500, detail=f"Spotify API request failed: {e}") from e
     except SpotifyOauthError as e:
         logger.exception("Spotify OAuth error")
         raise HTTPException(
             status_code=500,
-            detail=f"Spotify authentication failed: {e}",
+            detail="Spotify authentication failed. Check your API keys.",
         ) from e
     except Exception as e:
         logger.exception("Unexpected error calling Spotify")

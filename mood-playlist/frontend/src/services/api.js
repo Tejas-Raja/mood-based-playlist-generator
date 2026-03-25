@@ -27,11 +27,16 @@ async function parseJsonOrEmpty(res) {
  * @returns {Promise<{ mood: string, valence: number, energy: number }>}
  */
 export async function analyzeMood(text) {
-  const res = await fetch(`${API_BASE}/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  })
+  let res
+  try {
+    res = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    })
+  } catch {
+    throw new Error('Could not reach the server. Is the backend running?')
+  }
   const body = await parseJsonOrEmpty(res)
   if (!res.ok) {
     throw new Error(errorMessageFromResponse(res, body))
@@ -51,7 +56,12 @@ export async function getPlaylist(valence, energy, mood) {
     energy: String(energy),
     mood: mood ?? 'calm',
   })
-  const res = await fetch(`${API_BASE}/playlist?${params.toString()}`)
+  let res
+  try {
+    res = await fetch(`${API_BASE}/playlist?${params.toString()}`)
+  } catch {
+    throw new Error('Could not reach the server. Is the backend running?')
+  }
   const body = await parseJsonOrEmpty(res)
   if (!res.ok) {
     throw new Error(errorMessageFromResponse(res, body))

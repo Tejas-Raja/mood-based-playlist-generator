@@ -2,22 +2,17 @@ import { useCallback, useState } from 'react'
 
 import { ErrorMessage } from './components/ErrorMessage.jsx'
 import { MoodBadge } from './components/MoodBadge.jsx'
+import { PlaylistSkeleton } from './components/PlaylistSkeleton.jsx'
 import { PlaylistView } from './components/PlaylistView.jsx'
 import { TextInput } from './components/TextInput.jsx'
 import { analyzeMood, getPlaylist } from './services/api.js'
 
-function moodBackgroundClass(moodState) {
-  const key = moodState?.mood ?? null
-  if (key === 'happy') {
-    return 'bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100'
-  }
-  if (key === 'sad') {
-    return 'bg-slate-900'
-  }
-  if (key === 'calm') {
-    return 'bg-purple-50'
-  }
-  return 'bg-white'
+function backgroundGradientClass(moodState) {
+  const mood = moodState?.mood ?? null
+  if (mood === 'happy') return 'from-amber-100 via-orange-50 to-yellow-50'
+  if (mood === 'sad') return 'from-slate-900 via-slate-800 to-slate-900'
+  if (mood === 'calm') return 'from-purple-50 via-violet-50 to-indigo-50'
+  return 'from-white via-gray-50 to-gray-50'
 }
 
 function App() {
@@ -26,8 +21,17 @@ function App() {
   const [playlist, setPlaylist] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [inlineValidation, setInlineValidation] = useState(null)
 
   const handleSubmit = useCallback(async () => {
+    const trimmed = text.trim()
+    if (trimmed.length < 10) {
+      setInlineValidation('Please enter at least 10 characters.')
+      setError(null)
+      return
+    }
+
+    setInlineValidation(null)
     setLoading(true)
     setError(null)
     try {
@@ -41,27 +45,45 @@ function App() {
       setPlaylist(playlistResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
+      setInlineValidation(null)
     } finally {
       setLoading(false)
     }
   }, [text])
 
-  const surface = mood?.mood === 'sad' ? 'dark' : 'light'
-  const titleClass =
-    surface === 'dark'
-      ? 'text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl'
-      : 'text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl'
+  const isDark = mood?.mood === 'sad'
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-700 ${moodBackgroundClass(mood)}`}
+      className={`min-h-screen bg-gradient-to-br transition-all duration-700 ${backgroundGradientClass(
+        mood,
+      )} ${isDark ? 'text-slate-100' : 'text-slate-900'}`}
     >
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-16">
-        <h1 className={`mb-10 text-center ${titleClass}`}>🎵 Mood Playlist</h1>
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-16 sm:px-0">
+        <div className="mb-10 text-center">
+          <h1 className={`text-4xl font-bold tracking-tight sm:text-5xl`}>
+            Mood Playlist
+          </h1>
+          <p
+            className={`mt-2 text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}
+          >
+            Describe your day. We'll find the soundtrack.
+          </p>
+          <div
+            className="mx-auto mt-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-violet-400 via-amber-300 to-fuchsia-400 opacity-80"
+            aria-hidden
+          />
+        </div>
 
         {error ? (
           <div className="mb-8">
-            <ErrorMessage message={error} onDismiss={() => setError(null)} />
+            <ErrorMessage
+              message={error}
+              onDismiss={() => {
+                setError(null)
+                setInlineValidation(null)
+              }}
+            />
           </div>
         ) : null}
 
@@ -70,8 +92,20 @@ function App() {
           setText={setText}
           onSubmit={handleSubmit}
           loading={loading}
-          surface={surface}
+          isDark={isDark}
         />
+
+        {inlineValidation ? (
+          <p
+            className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+              isDark
+                ? 'border-slate-700/80 bg-slate-800/40 text-slate-200'
+                : 'border-slate-200/80 bg-white/70 text-slate-700'
+            }`}
+          >
+            {inlineValidation}
+          </p>
+        ) : null}
 
         {mood ? (
           <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
@@ -79,14 +113,20 @@ function App() {
               mood={mood.mood}
               valence={mood.valence}
               energy={mood.energy}
-              surface={surface}
+              isDark={isDark}
             />
+          </div>
+        ) : null}
+
+        {loading && !playlist ? (
+          <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
+            <PlaylistSkeleton isDark={isDark} />
           </div>
         ) : null}
 
         {playlist ? (
           <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
-            <PlaylistView playlist={playlist} surface={surface} />
+            <PlaylistView playlist={playlist} isDark={isDark} />
           </div>
         ) : null}
       </div>

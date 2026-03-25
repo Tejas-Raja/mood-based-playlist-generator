@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 function barTone(mood) {
   if (mood === 'happy') return 'bg-amber-400'
   if (mood === 'sad') return 'bg-sky-500'
@@ -19,9 +21,26 @@ function labelTone(mood, isDarkLayout) {
   return 'text-slate-500'
 }
 
-export function MoodBadge({ mood, valence, energy, surface = 'light' }) {
-  const isDarkLayout = surface === 'dark'
+export function MoodBadge({
+  mood,
+  valence,
+  energy,
+  isDark,
+  surface = 'light',
+}) {
+  const isDarkLayout =
+    typeof isDark === 'boolean' ? isDark : surface === 'dark'
   const label = mood ? mood.charAt(0).toUpperCase() + mood.slice(1) : ''
+
+  const [displayValence, setDisplayValence] = useState(0)
+  const [displayEnergy, setDisplayEnergy] = useState(0)
+
+  useEffect(() => {
+    const v = Math.min(1, Math.max(0, valence ?? 0))
+    const e = Math.min(1, Math.max(0, energy ?? 0))
+    setDisplayValence(v)
+    setDisplayEnergy(e)
+  }, [valence, energy])
 
   return (
     <div className="animate-mood-fade-in space-y-4">
@@ -44,8 +63,10 @@ export function MoodBadge({ mood, valence, energy, surface = 'light' }) {
             className={`h-2 overflow-hidden rounded-full ${isDarkLayout ? 'bg-slate-700' : 'bg-slate-200/90'}`}
           >
             <div
-              className={`h-full rounded-full transition-all duration-500 ${barTone(mood)}`}
-              style={{ width: `${Math.min(100, Math.max(0, valence * 100))}%` }}
+              className={`h-full rounded-full transition-[width] duration-700 ease-out ${barTone(mood)}`}
+              style={{
+                width: `${Math.min(100, Math.max(0, displayValence * 100))}%`,
+              }}
             />
           </div>
         </div>
@@ -60,12 +81,23 @@ export function MoodBadge({ mood, valence, energy, surface = 'light' }) {
             className={`h-2 overflow-hidden rounded-full ${isDarkLayout ? 'bg-slate-700' : 'bg-slate-200/90'}`}
           >
             <div
-              className={`h-full rounded-full transition-all duration-500 ${barTone(mood)}`}
-              style={{ width: `${Math.min(100, Math.max(0, energy * 100))}%` }}
+              className={`h-full rounded-full transition-[width] duration-700 ease-out ${barTone(mood)}`}
+              style={{
+                width: `${Math.min(100, Math.max(0, displayEnergy * 100))}%`,
+              }}
             />
           </div>
         </div>
       </div>
+
+      <p
+        className={`pt-1 text-center text-xs ${
+          isDarkLayout ? 'text-slate-300' : 'text-slate-600'
+        }`}
+      >
+        Based on your text, we found a{' '}
+        <span className="font-semibold capitalize">{mood}</span> vibe
+      </p>
     </div>
   )
 }

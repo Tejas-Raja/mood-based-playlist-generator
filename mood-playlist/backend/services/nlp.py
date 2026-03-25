@@ -67,7 +67,16 @@ def analyze_mood(text: str) -> dict:
     Returns a dict: ``mood`` (str), ``valence`` (float), ``energy`` (float).
     """
     analyzer = _get_analyzer()
-    compound = analyzer.polarity_scores(text)["compound"]
+    try:
+        compound = analyzer.polarity_scores(text)["compound"]
+    except LookupError:
+        # NLTK sometimes needs an on-demand lexicon download (e.g. fresh
+        # environment before first run). Auto-download and retry once.
+        nltk.download("vader_lexicon", quiet=True)
+        global _analyzer
+        _analyzer = None
+        analyzer = _get_analyzer()
+        compound = analyzer.polarity_scores(text)["compound"]
 
     if compound >= 0.2:
         mood = "happy"
