@@ -11,6 +11,8 @@ class MoodResponse(BaseModel):
     mood: str
     valence: float
     energy: float
+    reason: str
+    keywords_detected: List[str]
 
 
 class Song(BaseModel):
