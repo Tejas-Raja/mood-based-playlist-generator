@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion'
+
 import { SongCard } from './SongCard.jsx'
 
 export function PlaylistView({ playlist, isDark, surface = 'light' }) {
@@ -40,25 +42,33 @@ export function PlaylistView({ playlist, isDark, surface = 'light' }) {
   }
 
   return (
-    <div className="space-y-5">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-5"
+    >
       <p className={`text-center text-sm italic ${hintClass}`}>{playlist.mood_hint}</p>
       <ul className="space-y-3">
         {songs.map((song, index) => (
-          <li
-            key={`${song.spotify_url}-${index}`}
-            className="animate-mood-card-in"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <SongCard
-              title={song.title}
-              artist={song.artist}
-              album={song.album}
-              image={song.image}
-              spotify_url={song.spotify_url}
-            />
+          <li key={`${song.spotify_url}-${index}`}>
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.06, duration: 0.3 }}
+            >
+              <SongCard
+                title={song.title}
+                artist={song.artist}
+                album={song.album}
+                image={song.image}
+                spotify_url={song.spotify_url}
+              />
+            </motion.div>
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   )
 }

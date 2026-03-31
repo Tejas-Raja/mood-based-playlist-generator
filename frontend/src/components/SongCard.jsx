@@ -1,9 +1,13 @@
+import { motion } from 'framer-motion'
+
 export function SongCard({ title, artist, album, image, spotify_url }) {
   return (
-    <a
+    <motion.a
       href={spotify_url || '#'}
       target="_blank"
       rel="noopener noreferrer"
+      whileHover={{ scale: 1.015, y: -2 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-3 shadow-sm backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/60 hover:border-violet-200 hover:shadow-md dark:border-slate-600/80 dark:bg-slate-800/60 dark:hover:bg-slate-800/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       aria-label={`Open ${title || 'track'} on Spotify`}
     >
@@ -70,6 +74,6 @@ export function SongCard({ title, artist, album, image, spotify_url }) {
           {album}
         </p>
       </div>
-    </a>
+    </motion.a>
   )
 }

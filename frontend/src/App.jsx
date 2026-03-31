@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 
 import { ErrorMessage } from './components/ErrorMessage.jsx'
-import { MoodBadge } from './components/MoodBadge.jsx'
-import { PlaylistSkeleton } from './components/PlaylistSkeleton.jsx'
+import { LoadingState } from './components/LoadingState.jsx'
+import { MoodAnalysis } from './components/MoodAnalysis.jsx'
 import { PlaylistView } from './components/PlaylistView.jsx'
 import { TextInput } from './components/TextInput.jsx'
 import { analyzeMood, getPlaylist } from './services/api.js'
@@ -19,9 +19,10 @@ function App() {
   const [text, setText] = useState('')
   const [mood, setMood] = useState(null)
   const [playlist, setPlaylist] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(null)
   const [error, setError] = useState(null)
   const [inlineValidation, setInlineValidation] = useState(null)
+  const loading = loadingStep !== null
 
   const handleSubmit = useCallback(async () => {
     const trimmed = text.trim()
@@ -32,22 +33,24 @@ function App() {
     }
 
     setInlineValidation(null)
-    setLoading(true)
+    setLoadingStep('analyzing')
     setError(null)
     try {
       const moodResult = await analyzeMood(text)
+      setLoadingStep('finding')
       const playlistResult = await getPlaylist(
         moodResult.valence,
         moodResult.energy,
         moodResult.mood,
       )
+      setLoadingStep(null)
       setMood(moodResult)
       setPlaylist(playlistResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setInlineValidation(null)
     } finally {
-      setLoading(false)
+      setLoadingStep(null)
     }
   }, [text])
 
@@ -107,24 +110,21 @@ function App() {
           </p>
         ) : null}
 
-        {mood ? (
-          <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
-            <MoodBadge
-              mood={mood.mood}
-              valence={mood.valence}
-              energy={mood.energy}
-              isDark={isDark}
-            />
-          </div>
+        {loadingStep ? (
+          <LoadingState step={loadingStep} />
         ) : null}
 
-        {loading && !playlist ? (
-          <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
-            <PlaylistSkeleton isDark={isDark} />
-          </div>
+        {!loadingStep && mood ? (
+          <MoodAnalysis
+            mood={mood.mood}
+            valence={mood.valence}
+            energy={mood.energy}
+            reason={mood.reason}
+            keywords_detected={mood.keywords_detected}
+          />
         ) : null}
 
-        {playlist ? (
+        {!loadingStep && playlist ? (
           <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
             <PlaylistView playlist={playlist} isDark={isDark} />
           </div>
