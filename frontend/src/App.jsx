@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 
 import { ErrorMessage } from './components/ErrorMessage.jsx'
 import { LoadingState } from './components/LoadingState.jsx'
 import { MoodAnalysis } from './components/MoodAnalysis.jsx'
+import { MoodHistory } from './components/MoodHistory.jsx'
 import { PlaylistView } from './components/PlaylistView.jsx'
 import { TextInput } from './components/TextInput.jsx'
 import { analyzeMood, getPlaylist } from './services/api.js'
+import { clearHistory, getHistory, saveToHistory } from './services/history.js'
 
 function backgroundGradientClass(moodState) {
   const mood = moodState?.mood ?? null
@@ -20,6 +23,8 @@ function App() {
   const [mood, setMood] = useState(null)
   const [playlist, setPlaylist] = useState(null)
   const [loadingStep, setLoadingStep] = useState(null)
+  const [historyEntries, setHistoryEntries] = useState(() => getHistory())
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [error, setError] = useState(null)
   const [inlineValidation, setInlineValidation] = useState(null)
   const loading = loadingStep !== null
@@ -46,6 +51,14 @@ function App() {
       setLoadingStep(null)
       setMood(moodResult)
       setPlaylist(playlistResult)
+      const updatedHistory = saveToHistory({
+        text,
+        mood: moodResult.mood,
+        valence: moodResult.valence,
+        energy: moodResult.energy,
+        reason: moodResult.reason,
+      })
+      setHistoryEntries(updatedHistory)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setInlineValidation(null)
@@ -53,6 +66,46 @@ function App() {
       setLoadingStep(null)
     }
   }, [text])
+
+  const handleRegenerate = useCallback(async () => {
+    if (!mood) return
+    setLoadingStep('finding')
+    setError(null)
+    try {
+      const playlistResult = await getPlaylist(mood.valence, mood.energy, mood.mood)
+      setPlaylist(playlistResult)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoadingStep(null)
+    }
+  }, [mood])
+
+  const handleReplay = useCallback(async (entry) => {
+    setMood({
+      mood: entry.mood,
+      valence: entry.valence,
+      energy: entry.energy,
+      reason: entry.reason,
+      keywords_detected: [],
+    })
+    setHistoryOpen(false)
+    setLoadingStep('finding')
+    setError(null)
+    try {
+      const playlistResult = await getPlaylist(entry.valence, entry.energy, entry.mood)
+      setPlaylist(playlistResult)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoadingStep(null)
+    }
+  }, [])
+
+  const handleClearHistory = useCallback(() => {
+    clearHistory()
+    setHistoryEntries([])
+  }, [])
 
   const isDark = mood?.mood === 'sad'
 
@@ -63,7 +116,14 @@ function App() {
       )} ${isDark ? 'text-slate-100' : 'text-slate-900'}`}
     >
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-16 sm:px-0">
-        <div className="mb-10 text-center">
+        <div className="relative mb-10 text-center">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="absolute right-0 top-0 rounded-lg border border-slate-200 bg-white/60 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-violet-300 hover:text-violet-600"
+          >
+            History
+          </button>
           <h1 className={`text-4xl font-bold tracking-tight sm:text-5xl`}>
             Mood Playlist
           </h1>
@@ -126,10 +186,26 @@ function App() {
 
         {!loadingStep && playlist ? (
           <div className="mt-10 border-t border-slate-200/60 pt-10 dark:border-slate-600/50">
-            <PlaylistView playlist={playlist} isDark={isDark} />
+            <PlaylistView
+              playlist={playlist}
+              isDark={isDark}
+              onRegenerate={handleRegenerate}
+              loading={loadingStep === 'finding'}
+            />
           </div>
         ) : null}
       </div>
+
+      <AnimatePresence>
+        {historyOpen ? (
+          <MoodHistory
+            entries={historyEntries}
+            onClose={() => setHistoryOpen(false)}
+            onReplay={handleReplay}
+            onClear={handleClearHistory}
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
